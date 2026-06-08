@@ -58,3 +58,6 @@ lorindo/
 
 ## Documentación
 Ver `LoRindo_Stack_Instalacion.docx` para la guía completa de instalación.
+=======
+# lorindo
+>>>>>>> 89cb8d4123d5647024d21472e4cae1d73bbe54de
