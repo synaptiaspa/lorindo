@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lorindo-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lorindo-web
+  template:
+    metadata:
+      labels:
+        app: lorindo-web
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/tu-org/lorindo-web:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: "https://api.lorindo.cl/api/v1"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lorindo-web-svc
+spec:
+  selector:
+    app: lorindo-web
+  ports:
+    - port: 3000
+      targetPort: 3000
+  type: ClusterIP

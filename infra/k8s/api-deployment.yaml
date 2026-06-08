@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lorindo-api
+  labels:
+    app: lorindo-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lorindo-api
+  template:
+    metadata:
+      labels:
+        app: lorindo-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/tu-org/lorindo-api:latest
+          ports:
+            - containerPort: 3001
+          envFrom:
+            - secretRef:
+                name: lorindo-api-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lorindo-api-svc
+spec:
+  selector:
+    app: lorindo-api
+  ports:
+    - port: 3001
+      targetPort: 3001
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: lorindo-api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: lorindo-api
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: lorindo
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: lorindo_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm --filter api tsc --noEmit
+
+      - name: Run tests
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://lorindo:test@localhost:5432/lorindo_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test_secret_that_is_at_least_32_chars_long
